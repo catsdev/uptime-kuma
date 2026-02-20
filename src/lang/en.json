@@ -1477,5 +1477,20 @@
     "teltonikaModem": "Modem Id",
     "teltonikaModemHelptext": "The id of the SMS modem, must be in the format {0}. Refer to https://developers.teltonika-networks.com/reference/ for guidance.",
     "teltonikaPhoneNumber": "Phone number",
-    "teltonikaPhoneNumberHelptext": "The number must be in the international format {0}, {1}. Only one number is allowed."
+    "teltonikaPhoneNumberHelptext": "The number must be in the international format {0}, {1}. Only one number is allowed.",
+    "Subscribe to Updates": "Subscribe to Updates",
+    "Get notified when incidents occur": "Get notified when incidents occur",
+    "Your email address": "Your email address",
+    "Incident notifications": "Incident notifications",
+    "Status change notifications": "Status change notifications",
+    "Monitor specific components (optional)": "Monitor specific components (optional)",
+    "All components": "All components",
+    "Subscribe": "Subscribe",
+    "We've sent a verification link to": "We've sent a verification link to",
+    "subscribers": "subscribers",
+    "Check your email!": "Check your email!",
+    "Click the link in the email to confirm your subscription": "Click the link in the email to confirm your subscription",
+    "Subscribe another email": "Subscribe another email",
+    "Failed to subscribe": "Failed to subscribe",
+    "We'll send you a verification email": "We'll send you a verification email"
 }
