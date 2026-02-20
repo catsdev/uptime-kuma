@@ -1,6 +1,7 @@
 const dayjs = require("dayjs");
 const axios = require("axios");
 const { Prometheus } = require("../prometheus");
+const NotificationSubscriber = require("../notification-subscriber");
 const {
     log,
     UP,
@@ -1003,6 +1004,39 @@ class Monitor extends BeanModel {
                 if (Monitor.isImportantForNotification(isFirstBeat, previousBeat?.status, bean.status)) {
                     log.debug("monitor", `[${this.name}] sendNotification`);
                     await Monitor.sendNotification(isFirstBeat, this, bean);
+
+                    // Send status change notification to subscribers
+                    if (!isFirstBeat && previousBeat?.status !== bean.status) {
+                        try {
+                            log.info("monitor", `Status changed for ${this.name}: ${previousBeat.status} -> ${bean.status}, checking for status page...`);
+                            // Get status page ID for this monitor via monitor_group -> group -> status_page
+                            const statusPageInfo = await R.getRow(
+                                `SELECT g.status_page_id 
+                                 FROM monitor_group mg 
+                                 JOIN \`group\` g ON mg.group_id = g.id 
+                                 WHERE mg.monitor_id = ? AND g.status_page_id IS NOT NULL 
+                                 LIMIT 1`,
+                                [this.id]
+                            );
+                            
+                            log.info("monitor", `Status page query result for monitor ${this.id}: ${JSON.stringify(statusPageInfo)}`);
+                            
+                            if (statusPageInfo && statusPageInfo.status_page_id) {
+                                log.info("monitor", `Sending status change notification for monitor ${this.name} (${previousBeat.status} -> ${bean.status})`);
+                                await NotificationSubscriber.sendStatusChangeNotification(
+                                    this.id,
+                                    this.name,
+                                    statusPageInfo.status_page_id,
+                                    previousBeat.status,
+                                    bean.status
+                                );
+                            } else {
+                                log.warn("monitor", `No status page found for monitor ${this.id} (${this.name})`);
+                            }
+                        } catch (error) {
+                            log.error("monitor", `Failed to send status change notification: ${error.message}`);
+                        }
+                    }
                 } else {
                     log.debug(
                         "monitor",

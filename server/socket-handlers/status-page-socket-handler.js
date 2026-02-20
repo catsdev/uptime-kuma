@@ -7,6 +7,7 @@ const Database = require("../database");
 const apicache = require("../modules/apicache");
 const StatusPage = require("../model/status_page");
 const { UptimeKumaServer } = require("../uptime-kuma-server");
+const NotificationSubscriber = require("../notification-subscriber");
 
 /**
  * Validates incident data
@@ -67,6 +68,21 @@ module.exports.statusPageSocketHandler = (socket) => {
             }
 
             await R.store(incidentBean);
+
+            // Send notification to subscribers
+            try {
+                if (!incident.id) {
+                    // New incident - send incident created notification
+                    await NotificationSubscriber.sendIncidentNotification(incidentBean.id);
+                    log.info("incident", `Sent incident created notification for incident ${incidentBean.id}`);
+                } else {
+                    // Updated incident - send incident update notification
+                    await NotificationSubscriber.sendIncidentUpdateNotification(incidentBean.id, incident.content);
+                    log.info("incident", `Sent incident update notification for incident ${incidentBean.id}`);
+                }
+            } catch (error) {
+                log.error("incident", `Failed to send incident notification: ${error.message}`);
+            }
 
             callback({
                 ok: true,
@@ -168,6 +184,14 @@ module.exports.statusPageSocketHandler = (socket) => {
 
             await R.store(bean);
 
+            // Send incident update notification to subscribers
+            try {
+                await NotificationSubscriber.sendIncidentUpdateNotification(bean.id, incident.content);
+                log.info("incident", `Sent incident update notification for incident ${bean.id}`);
+            } catch (error) {
+                log.error("incident", `Failed to send incident update notification: ${error.message}`);
+            }
+
             callback({
                 ok: true,
                 msg: "Saved.",
@@ -248,6 +272,14 @@ module.exports.statusPageSocketHandler = (socket) => {
             }
 
             await bean.resolve();
+
+            // Send incident resolved notification to subscribers
+            try {
+                await NotificationSubscriber.sendIncidentResolvedNotification(bean.id);
+                log.info("incident", `Sent incident resolved notification for incident ${bean.id}`);
+            } catch (error) {
+                log.error("incident", `Failed to send incident resolved notification: ${error.message}`);
+            }
 
             callback({
                 ok: true,

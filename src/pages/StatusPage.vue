@@ -496,6 +496,15 @@
                 />
             </div>
 
+            <!-- Subscriber Widget (for public view only) -->
+            <SubscriberWidget
+                v-if="!enableEditMode && slug"
+                :statusPageSlug="slug"
+                :components="$root.publicMonitorList"
+                :showComponentSelect="false"
+                class="mb-4"
+            />
+
             <!-- Past Incidents -->
             <div v-if="pastIncidentCount > 0" class="past-incidents-section mb-4">
                 <h2 class="past-incidents-title mb-3">
@@ -622,6 +631,7 @@ import MaintenanceTime from "../components/MaintenanceTime.vue";
 import IncidentHistory from "../components/IncidentHistory.vue";
 import IncidentManageModal from "../components/IncidentManageModal.vue";
 import IncidentEditForm from "../components/IncidentEditForm.vue";
+import SubscriberWidget from "../components/SubscriberWidget.vue";
 import { getResBaseURL } from "../util-frontend";
 import {
     STATUS_PAGE_ALL_DOWN,
@@ -658,6 +668,7 @@ export default {
         IncidentHistory,
         IncidentManageModal,
         IncidentEditForm,
+        SubscriberWidget,
     },
 
     // Leave Page for vue route change

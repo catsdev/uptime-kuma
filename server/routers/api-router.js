@@ -18,6 +18,7 @@ const { makeBadge } = require("badge-maker");
 const { Prometheus } = require("../prometheus");
 const Database = require("../database");
 const { UptimeCalculator } = require("../uptime-calculator");
+const NotificationSubscriber = require("../notification-subscriber");
 
 let router = express.Router();
 
@@ -105,6 +106,34 @@ router.all("/api/push/:pushToken", async (request, response) => {
 
             log.debug("monitor", `[${monitor.name}] sendNotification`);
             await Monitor.sendNotification(isFirstBeat, monitor, bean);
+
+            // Send status change notification to subscribers
+            if (!isFirstBeat && previousHeartbeat?.status !== bean.status) {
+                try {
+                    // Get status page ID for this monitor via monitor_group -> group -> status_page
+                    const statusPageInfo = await R.getRow(
+                        `SELECT g.status_page_id 
+                         FROM monitor_group mg 
+                         JOIN \`group\` g ON mg.group_id = g.id 
+                         WHERE mg.monitor_id = ? AND g.status_page_id IS NOT NULL 
+                         LIMIT 1`,
+                        [monitor.id]
+                    );
+                    
+                    if (statusPageInfo && statusPageInfo.status_page_id) {
+                        log.debug("monitor", `Sending status change notification for monitor ${monitor.name} (${previousHeartbeat.status} -> ${bean.status})`);
+                        await NotificationSubscriber.sendStatusChangeNotification(
+                            monitor.id,
+                            monitor.name,
+                            statusPageInfo.status_page_id,
+                            previousHeartbeat.status,
+                            bean.status
+                        );
+                    }
+                } catch (error) {
+                    log.error("monitor", `Failed to send status change notification: ${error.message}`);
+                }
+            }
         } else {
             if (bean.status === DOWN && monitor.resendInterval > 0) {
                 ++bean.downCount;

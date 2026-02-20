@@ -188,6 +188,7 @@ const { resetChrome } = require("./monitor-types/real-browser-monitor-type");
 const { EmbeddedMariaDB } = require("./embedded-mariadb");
 const { SetupDatabase } = require("./setup-database");
 const { chartSocketHandler } = require("./socket-handlers/chart-socket-handler");
+const SubscriberNotificationService = require("./notification-subscriber");
 
 app.use(express.json());
 
@@ -354,6 +355,10 @@ let needSetup = false;
     // Status Page Router
     const statusPageRouter = require("./routers/status-page-router");
     app.use(statusPageRouter);
+
+    // Subscriber Router (public API for email subscriptions)
+    const subscriberRouter = require("./routers/subscriber-router");
+    app.use(subscriberRouter);
 
     // Universal Route Handler, must be at the end of all express routes.
     app.get("*", async (_request, response) => {
@@ -1752,6 +1757,10 @@ let needSetup = false;
         await initBackgroundJobs();
 
         checkVersion.startInterval();
+        
+        // Start notification queue processor for subscriber notifications
+        SubscriberNotificationService.startQueueProcessor();
+        log.info("server", "Subscriber notification queue processor started");
     });
 
     // Start cloudflared at the end if configured
