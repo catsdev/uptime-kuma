@@ -1006,37 +1006,8 @@ class Monitor extends BeanModel {
                     await Monitor.sendNotification(isFirstBeat, this, bean);
 
                     // Send status change notification to subscribers
-                    if (!isFirstBeat) {
-                        try {
-                            log.info("monitor", `Status changed for ${this.name}: ${previousBeat.status} -> ${bean.status}, checking for status page...`);
-                            // Get status page ID for this monitor via monitor_group -> group -> status_page
-                            const statusPageInfo = await R.getRow(
-                                `SELECT g.status_page_id 
-                                 FROM monitor_group mg 
-                                 JOIN \`group\` g ON mg.group_id = g.id 
-                                 WHERE mg.monitor_id = ? AND g.status_page_id IS NOT NULL 
-                                 LIMIT 1`,
-                                [this.id]
-                            );
-                            
-                            log.info("monitor", `Status page query result for monitor ${this.id}: ${JSON.stringify(statusPageInfo)}`);
-                            
-                            if (statusPageInfo && statusPageInfo.status_page_id) {
-                                log.info("monitor", `Sending status change notification for monitor ${this.name} (${previousBeat.status} -> ${bean.status})`);
-                                await NotificationSubscriber.sendStatusChangeNotification(
-                                    this.id,
-                                    this.name,
-                                    statusPageInfo.status_page_id,
-                                    previousBeat.status,
-                                    bean.status
-                                );
-                            } else {
-                                log.warn("monitor", `No status page found for monitor ${this.id} (${this.name})`);
-                            }
-                        } catch (error) {
-                            log.error("monitor", `Failed to send status change notification: ${error.message}`);
-                        }
-                    }
+                    log.debug("monitor", `[${this.name}] sendStatusPageNotification`);
+                    await Monitor.sendStatusPageNotification(isFirstBeat, this, previousBeat, bean);
                 } else {
                     log.debug(
                         "monitor",
@@ -1582,6 +1553,49 @@ class Monitor extends BeanModel {
                     log.error("monitor", "Cannot send notification to " + notification.name);
                     log.error("monitor", e);
                 }
+            }
+        }
+    }
+
+    /**
+     * Send status page notification to subscribers
+     * @param {boolean} isFirstBeat Is this beat the first of this monitor?
+     * @param {Monitor} monitor The monitor to send a notification about
+     * @param {import("./heartbeat")} previousBeat Previous heartbeat
+     * @param {import("./heartbeat")} bean Current heartbeat
+     * @returns {Promise<void>}
+     */
+    static async sendStatusPageNotification(isFirstBeat, monitor, previousBeat, bean) {
+        if (!isFirstBeat) {
+            try {
+                log.info("monitor", `Status changed for ${monitor.name}: ${previousBeat.status} -> ${bean.status}, checking for status page...`);
+                
+                // Get status page ID for this monitor via monitor_group -> group -> status_page
+                const statusPageInfo = await R.getRow(
+                    `SELECT g.status_page_id 
+                     FROM monitor_group mg 
+                     JOIN \`group\` g ON mg.group_id = g.id 
+                     WHERE mg.monitor_id = ? AND g.status_page_id IS NOT NULL 
+                     LIMIT 1`,
+                    [ monitor.id ]
+                );
+                
+                log.info("monitor", `Status page query result for monitor ${monitor.id}: ${JSON.stringify(statusPageInfo)}`);
+                
+                if (statusPageInfo && statusPageInfo.status_page_id) {
+                    log.info("monitor", `Sending status change notification for monitor ${monitor.name} (${previousBeat.status} -> ${bean.status})`);
+                    await NotificationSubscriber.sendStatusChangeNotification(
+                        monitor.id,
+                        monitor.name,
+                        statusPageInfo.status_page_id,
+                        previousBeat.status,
+                        bean.status
+                    );
+                } else {
+                    log.warn("monitor", `No status page found for monitor ${monitor.id} (${monitor.name})`);
+                }
+            } catch (error) {
+                log.error("monitor", `Failed to send status change notification: ${error.message}`);
             }
         }
     }
