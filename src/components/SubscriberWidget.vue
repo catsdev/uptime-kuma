@@ -3,9 +3,9 @@
         <div v-if="!submitted" class="subscription-form">
             <h5 class="mb-3">
                 <font-awesome-icon icon="envelope" class="me-2" />
-                {{ $t("Subscribe to Updates") }}
+                {{ $t("subscribeToUpdates") }}
             </h5>
-            <p class="text-muted small">{{ $t("Get notified when incidents occur") }}</p>
+            <p class="text-muted small">{{ $t("getNotifiedWhenIncidentsOccur") }}</p>
 
             <form @submit.prevent="subscribe">
                 <div class="mb-3">
@@ -13,7 +13,7 @@
                         v-model="email"
                         type="email"
                         class="form-control"
-                        :placeholder="$t('Your email address')"
+                        :placeholder="$t('yourEmailAddress')"
                         required
                     />
                 </div>
@@ -28,7 +28,7 @@
                             class="form-check-input"
                         />
                         <label for="notify-incidents" class="form-check-label">
-                            {{ $t("Incident notifications") }}
+                            {{ $t("incidentNotifications") }}
                         </label>
                     </div>
                     <div class="form-check">
@@ -39,16 +39,16 @@
                             class="form-check-input"
                         />
                         <label for="notify-status" class="form-check-label">
-                            {{ $t("Status change notifications") }}
+                            {{ $t("statusChangeNotifications") }}
                         </label>
                     </div>
                 </div>
 
                 <!-- Component Selection (Optional) -->
                 <div v-if="components.length > 0 && showComponentSelect" class="mb-3">
-                    <label class="form-label small">{{ $t("Monitor specific components (optional)") }}</label>
+                    <label class="form-label small">{{ $t("monitorSpecificComponents") }}</label>
                     <select v-model="selectedComponent" class="form-select form-select-sm">
-                        <option value="">{{ $t("All components") }}</option>
+                        <option value="">{{ $t("allComponents") }}</option>
                         <option v-for="component in components" :key="component.id" :value="component.id">
                             {{ component.name }}
                         </option>
@@ -65,7 +65,7 @@
                 </button>
 
                 <p class="text-muted small mt-2 mb-0">
-                    {{ $t("We'll send you a verification email") }}
+                    {{ $t("wellSendYouVerificationEmail") }}
                 </p>
             </form>
 
@@ -83,15 +83,15 @@
             <div class="success-icon mb-3">
                 <font-awesome-icon icon="check-circle" size="3x" class="text-success" />
             </div>
-            <h5>{{ $t("Check your email!") }}</h5>
+            <h5>{{ $t("checkYourEmail") }}</h5>
             <p class="text-muted">
-                {{ $t("We've sent a verification link to") }} <strong>{{ email }}</strong>
+                {{ $t("verificationLinkSent") }} <strong>{{ email }}</strong>
             </p>
             <p class="small text-muted">
-                {{ $t("Click the link in the email to confirm your subscription") }}
+                {{ $t("clickTheLinkInEmailToConfirmSubscription") }}
             </p>
             <button class="btn btn-sm btn-outline-secondary mt-2" @click="reset">
-                {{ $t("Subscribe another email") }}
+                {{ $t("subscribeAnotherEmail") }}
             </button>
         </div>
     </div>
@@ -166,7 +166,7 @@ export default {
                     this.submitted = true;
                     this.subscriberCount = (this.subscriberCount || 0) + 1;
                 } else {
-                    alert(response.data.msg || this.$t("Failed to subscribe"));
+                    alert(response.data.msg || this.$t("failedToSubscribe"));
                 }
             } catch (error) {
                 console.error("Subscription error:", error);
