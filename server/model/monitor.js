@@ -1006,7 +1006,7 @@ class Monitor extends BeanModel {
                     await Monitor.sendNotification(isFirstBeat, this, bean);
 
                     // Send status change notification to subscribers
-                    if (!isFirstBeat && previousBeat?.status !== bean.status) {
+                    if (!isFirstBeat) {
                         try {
                             log.info("monitor", `Status changed for ${this.name}: ${previousBeat.status} -> ${bean.status}, checking for status page...`);
                             // Get status page ID for this monitor via monitor_group -> group -> status_page
