@@ -1,11 +1,32 @@
 <template>
-    <div class="subscriber-widget">
-        <div v-if="!submitted" class="subscription-form">
-            <h5 class="mb-3">
-                <font-awesome-icon icon="envelope" class="me-2" />
-                {{ $t("subscribeToUpdates") }}
-            </h5>
-            <p class="text-muted small">{{ $t("getNotifiedWhenIncidentsOccur") }}</p>
+    <div class="subscriber-widget" :class="{ 'expanded': isExpanded }">
+        <!-- Compact View -->
+        <div v-if="!submitted && !isExpanded" class="compact-view" @click="toggleExpand">
+            <div class="compact-content">
+                <div class="compact-left">
+                    <font-awesome-icon icon="envelope" class="me-2" />
+                    <span class="compact-text">{{ $t("subscribeToUpdates") }}</span>
+                    <span v-if="subscriberCount !== null" class="subscriber-badge ms-3">
+                        <font-awesome-icon icon="users" class="me-1" />
+                        {{ subscriberCount }}
+                    </span>
+                </div>
+                <div class="compact-right">
+                    <font-awesome-icon icon="chevron-down" class="expand-icon" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Expanded Form -->
+        <div v-if="!submitted && isExpanded" class="subscription-form">
+            <div class="form-header" @click="toggleExpand">
+                <h5 class="mb-0">
+                    <font-awesome-icon icon="envelope" class="me-2" />
+                    {{ $t("subscribeToUpdates") }}
+                </h5>
+                <font-awesome-icon icon="chevron-up" class="collapse-icon" />
+            </div>
+            <p class="text-muted small mt-2">{{ $t("getNotifiedWhenIncidentsOccur") }}</p>
 
             <form @submit.prevent="subscribe">
                 <div class="mb-3">
@@ -79,7 +100,7 @@
         </div>
 
         <!-- Success Message -->
-        <div v-else class="subscription-success text-center py-4">
+        <div v-else-if="submitted" class="subscription-success text-center py-4">
             <div class="success-icon mb-3">
                 <font-awesome-icon icon="check-circle" size="3x" class="text-success" />
             </div>
@@ -130,6 +151,7 @@ export default {
             subscribing: false,
             submitted: false,
             subscriberCount: null,
+            isExpanded: false,
         };
     },
     mounted() {
@@ -186,6 +208,11 @@ export default {
                 notifyStatusChanges: false,
             };
             this.submitted = false;
+            this.isExpanded = false;
+        },
+
+        toggleExpand() {
+            this.isExpanded = !this.isExpanded;
         },
     },
 };
@@ -196,13 +223,80 @@ export default {
     background: white;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    padding: 20px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.subscriber-widget.expanded {
+    padding: 20px;
+}
+
+/* Compact View Styles */
+.compact-view {
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.compact-view:hover {
+    background-color: #f8f9fa;
+}
+
+.compact-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.compact-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.compact-text {
+    font-weight: 500;
+    color: #212529;
+}
+
+.subscriber-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #e9ecef;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.compact-right {
+    color: #6c757d;
+}
+
+.expand-icon {
+    transition: transform 0.3s ease;
+}
+
+/* Form Header with collapse */
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.form-header:hover .collapse-icon {
+    color: #495057;
+}
+
+.collapse-icon {
+    color: #6c757d;
+    transition: all 0.2s ease;
 }
 
 .subscription-form h5 {
     color: #212529;
-    margin-bottom: 10px;
 }
 
 .form-check {
