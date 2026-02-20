@@ -61,7 +61,7 @@
                     :disabled="subscribing || !preferences.notifyIncidents"
                 >
                     <span v-if="subscribing" class="spinner-border spinner-border-sm me-2"></span>
-                    {{ $t("Subscribe") }}
+                    {{ $t("subscribe") }}
                 </button>
 
                 <p class="text-muted small mt-2 mb-0">
