@@ -357,6 +357,10 @@ let needSetup = false;
     const statusPageRouter = require("./routers/status-page-router");
     app.use(statusPageRouter);
 
+    // Subscriber Router (public API for email subscriptions)
+    const subscriberRouter = require("./routers/subscriber-router");
+    app.use(subscriberRouter);
+
     // Universal Route Handler, must be at the end of all express routes.
     app.get("*", async (_request, response) => {
         if (_request.originalUrl.startsWith("/upload/")) {
