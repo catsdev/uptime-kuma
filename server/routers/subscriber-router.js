@@ -4,7 +4,7 @@ const { log } = require("../../src/util");
 const Subscriber = require("../model/subscriber");
 const Subscription = require("../model/subscription");
 const StatusPage = require("../model/status_page");
-const { subscriptionRateLimiter } = require("./rate-limiter");
+const { subscriptionRateLimiter } = require("../rate-limiter");
 
 const router = express.Router();
 
@@ -24,8 +24,12 @@ router.use((req, res, next) => {
  * POST /api/status-page/:slug/subscribe
  * Public endpoint (no auth required)
  */
-router.post("/api/status-page/:slug/subscribe", subscriptionRateLimiter, async (request, response) => {
+router.post("/api/status-page/:slug/subscribe", async (request, response) => {
     try {
+        if (!(await subscriptionRateLimiter.pass((msg) => response.status(429).json(msg)))) {
+            return;
+        }
+
         const { slug } = request.params;
         const { email, componentId, notifyIncidents, notifyMaintenance, notifyStatusChanges } = request.body;
 
@@ -111,8 +115,12 @@ router.post("/api/status-page/:slug/subscribe", subscriptionRateLimiter, async (
  * GET /api/status-page/:slug/verify/:token
  * Public endpoint (no auth required)
  */
-router.get("/api/status-page/:slug/verify/:token", subscriptionRateLimiter, async (request, response) => {
+router.get("/api/status-page/:slug/verify/:token", async (request, response) => {
     try {
+        if (!(await subscriptionRateLimiter.pass((msg) => response.status(429).json(msg)))) {
+            return;
+        }
+
         const { token } = request.params;
 
         const subscription = await Subscription.findByVerificationToken(token);
@@ -163,8 +171,12 @@ router.get("/api/status-page/:slug/verify/:token", subscriptionRateLimiter, asyn
  * GET /api/status-page/:slug/unsubscribe/:token
  * Public endpoint (no auth required)
  */
-router.get("/api/status-page/:slug/unsubscribe/:token", subscriptionRateLimiter, async (request, response) => {
+router.get("/api/status-page/:slug/unsubscribe/:token", async (request, response) => {
     try {
+        if (!(await subscriptionRateLimiter.pass((msg) => response.status(429).json(msg)))) {
+            return;
+        }
+
         const { token } = request.params;
 
         const subscriber = await Subscriber.findByUnsubscribeToken(token);
