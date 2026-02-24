@@ -1,4 +1,5 @@
 const { RateLimiter } = require("limiter");
+const { rateLimit } = require("express-rate-limit");
 const { log } = require("../src/util");
 
 class KumaRateLimiter {
@@ -68,11 +69,19 @@ const twoFaRateLimiter = new KumaRateLimiter({
     errorMessage: "Too frequently, try again later.",
 });
 
-const subscriptionRateLimiter = new KumaRateLimiter({
-    tokensPerInterval: 2,
-    interval: "minute",
-    fireImmediately: true,
-    errorMessage: "Too frequently, try again later.",
+/**
+ * Rate limiter middleware for subscription endpoints
+ * Limits requests to prevent abuse of public subscription API
+ */
+const subscriptionRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 requests per window per IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        ok: false,
+        msg: "Too many subscription requests, please try again later.",
+    },
 });
 
 module.exports = {
