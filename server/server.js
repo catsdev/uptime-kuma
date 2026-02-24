@@ -1754,10 +1754,10 @@ let needSetup = false;
         await initBackgroundJobs();
 
         checkVersion.startInterval();
-        
+
         // Start notification queue processor for subscriber notifications
         SubscriberNotificationService.startQueueProcessor();
-        log.info("server", "Subscriber notification queue processor started");        
+        log.info("server", "Subscriber notification queue processor started");
     });
 
     // Start cloudflared at the end if configured

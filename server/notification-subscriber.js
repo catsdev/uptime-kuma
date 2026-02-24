@@ -5,7 +5,6 @@ const Subscription = require("./model/subscription");
 const { Notification } = require("./notification");
 
 class SubscriberNotificationService {
-    
     /**
      * Get default notification for status page emails
      * @returns {Promise<object|null>} notification bean or null
@@ -13,7 +12,7 @@ class SubscriberNotificationService {
     static async getDefaultNotification() {
         try {
             let notification = await R.findOne("notification", " is_default = ? ", [true]);
-            
+
             if (!notification) {
                 const allNotifications = await R.findAll("notification");
                 for (const n of allNotifications) {
@@ -24,7 +23,7 @@ class SubscriberNotificationService {
                     }
                 }
             }
-            
+
             return notification;
         } catch (error) {
             log.error("notification", `Failed to get default notification: ${error.message}`);
@@ -41,7 +40,7 @@ class SubscriberNotificationService {
      */
     static async sendEmail(to, subject, html) {
         const notificationBean = await this.getDefaultNotification();
-        
+
         if (!notificationBean) {
             log.warn("notification", "No default notification configured for status page emails");
             log.warn("notification", "Set up an SMTP notification and mark it as default in Settings > Notifications");
@@ -50,7 +49,7 @@ class SubscriberNotificationService {
 
         try {
             const config = JSON.parse(notificationBean.config);
-            
+
             const notification = {
                 ...config,
                 smtpTo: to,
@@ -58,9 +57,9 @@ class SubscriberNotificationService {
                 customBody: html,
                 htmlBody: true,
             };
-            
+
             await Notification.send(notification, "Status Page Notification Testing");
-            
+
             log.info("notification", `Email sent to ${to} via "${config.name}"`);
             return true;
         } catch (error) {
@@ -68,7 +67,7 @@ class SubscriberNotificationService {
             throw error;
         }
     }
-    
+
     /**
      * Queue notification for later delivery
      * @param {number} subscriberId Subscriber ID
@@ -87,7 +86,7 @@ class SubscriberNotificationService {
             queue.attempts = 0;
             queue.created_at = R.isoDateTime();
             await R.store(queue);
-            
+
             log.info("notification", `Queued ${type} for subscriber ${subscriberId}`);
             return queue;
         } catch (error) {
@@ -109,7 +108,7 @@ class SubscriberNotificationService {
             if (!baseURL) {
                 throw new Error("Primary Base URL is not set. Please configure it in Settings > General.");
             }
-            
+
             const verifyUrl = `${baseURL}/api/status-page/${statusPageSlug}/verify/${subscription.verification_token}`;
             const unsubscribeUrl = `${baseURL}/api/status-page/${statusPageSlug}/unsubscribe/${subscriber.unsubscribe_token}`;
 
@@ -180,7 +179,7 @@ class SubscriberNotificationService {
 
             // Get all subscriptions for this status page
             const subscriptions = await Subscription.getByStatusPage(incident.status_page_id);
-            
+
             log.info("notification", `Sending incident notification to ${subscriptions.length} subscribers`);
 
             let queuedCount = 0;
@@ -197,13 +196,14 @@ class SubscriberNotificationService {
 
                 const unsubscribeUrl = `${baseURL}/api/status-page/${statusPage.slug}/unsubscribe/${subscriber.unsubscribe_token}`;
 
-                const styleEmoji = {
-                    danger: "🔴",
-                    warning: "🟠",
-                    info: "🔵",
-                    primary: "ℹ️",
-                    dark: "⚫",
-                }[incident.style] || "📢";
+                const styleEmoji =
+                    {
+                        danger: "🔴",
+                        warning: "🟠",
+                        info: "🔵",
+                        primary: "ℹ️",
+                        dark: "⚫",
+                    }[incident.style] || "📢";
 
                 const message = {
                     to: subscriber.email,
@@ -230,7 +230,6 @@ class SubscriberNotificationService {
             }
 
             log.info("notification", `Queued incident notifications for ${queuedCount} verified subscribers`);
-
         } catch (error) {
             log.error("notification", `Failed to send incident notification: ${error.message}`);
             throw error;
@@ -263,7 +262,7 @@ class SubscriberNotificationService {
             }
 
             const subscriptions = await Subscription.getByStatusPage(incident.status_page_id);
-            
+
             log.info("notification", `Sending incident update to ${subscriptions.length} subscribers`);
 
             for (const subscription of subscriptions) {
@@ -305,7 +304,6 @@ class SubscriberNotificationService {
                     message,
                 });
             }
-
         } catch (error) {
             log.error("notification", `Failed to send incident update: ${error.message}`);
             throw error;
@@ -337,7 +335,7 @@ class SubscriberNotificationService {
             }
 
             const subscriptions = await Subscription.getByStatusPage(incident.status_page_id);
-            
+
             log.info("notification", `Sending incident resolved notification to ${subscriptions.length} subscribers`);
 
             for (const subscription of subscriptions) {
@@ -376,7 +374,6 @@ class SubscriberNotificationService {
                     message,
                 });
             }
-
         } catch (error) {
             log.error("notification", `Failed to send incident resolved notification: ${error.message}`);
             throw error;
@@ -398,14 +395,14 @@ class SubscriberNotificationService {
                 0: "Down",
                 1: "Up",
                 2: "Pending",
-                3: "Maintenance"
+                3: "Maintenance",
             };
 
             const statusColors = {
                 0: "#dc3545", // red
                 1: "#28a745", // green
                 2: "#ffc107", // yellow
-                3: "#17a2b8"  // blue
+                3: "#17a2b8", // blue
             };
 
             const previousStatusName = statusNames[previousStatus] || "Unknown";
@@ -439,7 +436,10 @@ class SubscriberNotificationService {
                 return;
             }
 
-            log.info("notification", `Sending status change notification to ${subscriptions.length} subscribers for monitor ${monitorName}`);
+            log.info(
+                "notification",
+                `Sending status change notification to ${subscriptions.length} subscribers for monitor ${monitorName}`
+            );
 
             for (const subscription of subscriptions) {
                 // Get subscriber with unsubscribe token
@@ -482,7 +482,6 @@ class SubscriberNotificationService {
             }
 
             log.info("notification", `Queued status change notifications for monitor ${monitorName}`);
-            
         } catch (error) {
             log.error("notification", `Failed to send status change notification: ${error.message}`);
             throw error;
@@ -495,8 +494,9 @@ class SubscriberNotificationService {
      */
     static async processQueue() {
         try {
-            const pending = await R.find("notification_queue", 
-                " status = ? AND attempts < ? ORDER BY created_at ASC LIMIT 50 ", 
+            const pending = await R.find(
+                "notification_queue",
+                " status = ? AND attempts < ? ORDER BY created_at ASC LIMIT 50 ",
                 ["pending", 5]
             );
 
@@ -509,14 +509,10 @@ class SubscriberNotificationService {
             for (const item of pending) {
                 try {
                     const data = JSON.parse(item.data);
-                    
+
                     if (data.message && data.message.to && data.message.subject && data.message.html) {
-                        const sent = await this.sendEmail(
-                            data.message.to,
-                            data.message.subject,
-                            data.message.html
-                        );
-                        
+                        const sent = await this.sendEmail(data.message.to, data.message.subject, data.message.html);
+
                         if (sent) {
                             item.status = "sent";
                             item.sent_at = R.isoDateTime();
@@ -529,23 +525,21 @@ class SubscriberNotificationService {
                         item.status = "failed";
                         item.last_error = "Invalid message format";
                     }
-                    
+
                     await R.store(item);
-                    
                 } catch (error) {
                     log.error("notification", `Failed to process notification ${item.id}: ${error.message}`);
-                    
+
                     item.attempts += 1;
                     item.last_error = error.message;
-                    
+
                     if (item.attempts >= 5) {
                         item.status = "failed";
                     }
-                    
+
                     await R.store(item);
                 }
             }
-
         } catch (error) {
             log.error("notification", `Failed to process queue: ${error.message}`);
         }
@@ -557,9 +551,9 @@ class SubscriberNotificationService {
      */
     static startQueueProcessor() {
         log.info("notification", "Starting notification queue processor");
-        
+
         this.processQueue();
-        
+
         this.queueInterval = setInterval(() => {
             this.processQueue();
         }, 60000);

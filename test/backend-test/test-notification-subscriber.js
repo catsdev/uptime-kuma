@@ -22,10 +22,7 @@ describe("SubscriberNotificationService", () => {
 
         test("falls back to first SMTP notification if no default", async () => {
             mock.method(R, "findOne", () => null);
-            mock.method(R, "findAll", () => [
-                { config: '{"type":"telegram"}' },
-                { config: '{"type":"smtp"}' }
-            ]);
+            mock.method(R, "findAll", () => [{ config: '{"type":"telegram"}' }, { config: '{"type":"smtp"}' }]);
 
             try {
                 const result = await SubscriberNotificationService.getDefaultNotification();
@@ -66,7 +63,11 @@ describe("SubscriberNotificationService", () => {
             mock.method(SubscriberNotificationService, "getDefaultNotification", async () => null);
 
             try {
-                const result = await SubscriberNotificationService.sendEmail("test@example.com", "Subject", "<p>Body</p>");
+                const result = await SubscriberNotificationService.sendEmail(
+                    "test@example.com",
+                    "Subject",
+                    "<p>Body</p>"
+                );
                 assert.strictEqual(result, false);
             } finally {
                 mock.restoreAll();
@@ -76,13 +77,17 @@ describe("SubscriberNotificationService", () => {
         test("sends email via Notification.send when default notification exists", async () => {
             const mockNotification = {
                 id: 1,
-                config: JSON.stringify({ type: "smtp", name: "Test SMTP" })
+                config: JSON.stringify({ type: "smtp", name: "Test SMTP" }),
             };
             mock.method(SubscriberNotificationService, "getDefaultNotification", async () => mockNotification);
             mock.method(Notification, "send", async () => {});
 
             try {
-                const result = await SubscriberNotificationService.sendEmail("test@example.com", "Subject", "<p>Body</p>");
+                const result = await SubscriberNotificationService.sendEmail(
+                    "test@example.com",
+                    "Subject",
+                    "<p>Body</p>"
+                );
                 assert.strictEqual(result, true);
                 assert.strictEqual(Notification.send.mock.calls.length, 1);
             } finally {
@@ -93,7 +98,7 @@ describe("SubscriberNotificationService", () => {
         test("throws error when Notification.send fails", async () => {
             const mockNotification = {
                 id: 1,
-                config: JSON.stringify({ type: "smtp", name: "Test SMTP" })
+                config: JSON.stringify({ type: "smtp", name: "Test SMTP" }),
             };
             mock.method(SubscriberNotificationService, "getDefaultNotification", async () => mockNotification);
             mock.method(Notification, "send", async () => {
@@ -120,7 +125,7 @@ describe("SubscriberNotificationService", () => {
                 data: null,
                 status: null,
                 attempts: null,
-                created_at: null
+                created_at: null,
             };
 
             mock.method(R, "dispense", () => queueBean);
@@ -131,8 +136,8 @@ describe("SubscriberNotificationService", () => {
                 message: {
                     to: "test@example.com",
                     subject: "Test Subject",
-                    html: "<p>Test</p>"
-                }
+                    html: "<p>Test</p>",
+                },
             };
 
             try {
@@ -163,16 +168,27 @@ describe("SubscriberNotificationService", () => {
 
     describe("sendIncidentNotification()", () => {
         test("skips queueing for unverified subscriptions", async () => {
-            const mockIncident = { id: 1, status_page_id: 1, style: "danger", title: "Test", content: "Content", created_date: "2026-02-19" };
+            const mockIncident = {
+                id: 1,
+                status_page_id: 1,
+                style: "danger",
+                title: "Test",
+                content: "Content",
+                created_date: "2026-02-19",
+            };
             const mockStatusPage = { id: 1, slug: "test-page" };
             const mockSubscriptions = [
                 { subscriber_id: 1, notify_incidents: true, verified: false },
-                { subscriber_id: 2, notify_incidents: true, verified: true }
+                { subscriber_id: 2, notify_incidents: true, verified: true },
             ];
 
             mock.method(R, "load", (table, id) => {
-                if (table === "incident") return mockIncident;
-                if (table === "status_page") return mockStatusPage;
+                if (table === "incident") {
+                    return mockIncident;
+                }
+                if (table === "status_page") {
+                    return mockStatusPage;
+                }
                 return { id, email: "test@example.com", unsubscribe_token: "token123" };
             });
             mock.method(Settings, "get", async () => "http://localhost:3000");
@@ -189,15 +205,24 @@ describe("SubscriberNotificationService", () => {
         });
 
         test("skips queueing when notify_incidents is false", async () => {
-            const mockIncident = { id: 1, status_page_id: 1, style: "danger", title: "Test", content: "Content", created_date: "2026-02-19" };
+            const mockIncident = {
+                id: 1,
+                status_page_id: 1,
+                style: "danger",
+                title: "Test",
+                content: "Content",
+                created_date: "2026-02-19",
+            };
             const mockStatusPage = { id: 1, slug: "test-page" };
-            const mockSubscriptions = [
-                { subscriber_id: 1, notify_incidents: false, verified: true }
-            ];
+            const mockSubscriptions = [{ subscriber_id: 1, notify_incidents: false, verified: true }];
 
             mock.method(R, "load", (table) => {
-                if (table === "incident") return mockIncident;
-                if (table === "status_page") return mockStatusPage;
+                if (table === "incident") {
+                    return mockIncident;
+                }
+                if (table === "status_page") {
+                    return mockStatusPage;
+                }
             });
             mock.method(Settings, "get", async () => "http://localhost:3000");
             mock.method(Subscription, "getByStatusPage", async () => mockSubscriptions);
@@ -216,10 +241,9 @@ describe("SubscriberNotificationService", () => {
             mock.method(R, "load", () => null);
 
             try {
-                await assert.rejects(
-                    () => SubscriberNotificationService.sendIncidentNotification(999),
-                    { message: "Incident not found" }
-                );
+                await assert.rejects(() => SubscriberNotificationService.sendIncidentNotification(999), {
+                    message: "Incident not found",
+                });
             } finally {
                 mock.restoreAll();
             }
@@ -227,15 +251,16 @@ describe("SubscriberNotificationService", () => {
 
         test("throws error if status page not found", async () => {
             mock.method(R, "load", (table) => {
-                if (table === "incident") return { id: 1, status_page_id: 1 };
+                if (table === "incident") {
+                    return { id: 1, status_page_id: 1 };
+                }
                 return null;
             });
 
             try {
-                await assert.rejects(
-                    () => SubscriberNotificationService.sendIncidentNotification(1),
-                    { message: "Status page not found" }
-                );
+                await assert.rejects(() => SubscriberNotificationService.sendIncidentNotification(1), {
+                    message: "Status page not found",
+                });
             } finally {
                 mock.restoreAll();
             }
@@ -248,11 +273,11 @@ describe("SubscriberNotificationService", () => {
                 {
                     id: 1,
                     data: JSON.stringify({
-                        message: { to: "test@example.com", subject: "Test", html: "<p>Test</p>" }
+                        message: { to: "test@example.com", subject: "Test", html: "<p>Test</p>" },
                     }),
                     attempts: 0,
-                    status: "pending"
-                }
+                    status: "pending",
+                },
             ];
 
             mock.method(R, "find", () => mockItems);
@@ -274,8 +299,8 @@ describe("SubscriberNotificationService", () => {
                     id: 1,
                     data: JSON.stringify({ invalid: "data" }),
                     attempts: 0,
-                    status: "pending"
-                }
+                    status: "pending",
+                },
             ];
 
             mock.method(R, "find", () => mockItems);
@@ -295,11 +320,11 @@ describe("SubscriberNotificationService", () => {
                 {
                     id: 1,
                     data: JSON.stringify({
-                        message: { to: "test@example.com", subject: "Test", html: "<p>Test</p>" }
+                        message: { to: "test@example.com", subject: "Test", html: "<p>Test</p>" },
                     }),
                     attempts: 0,
-                    status: "pending"
-                }
+                    status: "pending",
+                },
             ];
 
             mock.method(R, "find", () => mockItems);
@@ -321,11 +346,11 @@ describe("SubscriberNotificationService", () => {
                 {
                     id: 1,
                     data: JSON.stringify({
-                        message: { to: "test@example.com", subject: "Test", html: "<p>Test</p>" }
+                        message: { to: "test@example.com", subject: "Test", html: "<p>Test</p>" },
                     }),
                     attempts: 4,
-                    status: "pending"
-                }
+                    status: "pending",
+                },
             ];
 
             mock.method(R, "find", () => mockItems);

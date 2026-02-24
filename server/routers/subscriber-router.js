@@ -47,22 +47,18 @@ router.post("/api/status-page/:slug/subscribe", async (request, response) => {
 
         // Find or create subscriber
         let subscriber = await Subscriber.findByEmail(email);
-        
+
         if (!subscriber) {
             subscriber = R.dispense("subscriber");
             subscriber.email = email;
             subscriber.unsubscribe_token = Subscriber.generateUnsubscribeToken();
             await R.store(subscriber);
-            
+
             log.info("subscriber", `New subscriber created: ${email}`);
         }
 
         // Check if subscription already exists
-        const existingSub = await Subscription.exists(
-            subscriber.id,
-            statusPageId,
-            componentId || null
-        );
+        const existingSub = await Subscription.exists(subscriber.id, statusPageId, componentId || null);
 
         if (existingSub) {
             return response.json({
@@ -100,7 +96,6 @@ router.post("/api/status-page/:slug/subscribe", async (request, response) => {
             msg: "Subscription created! Please check your email to verify your subscription.",
             needsVerification: true,
         });
-
     } catch (error) {
         log.error("subscriber", error);
         response.status(500).json({
@@ -148,7 +143,6 @@ router.get("/api/status-page/:slug/verify/:token", async (request, response) => 
                 </body>
             </html>
         `);
-
     } catch (error) {
         log.error("subscriber", error);
         response.status(500).send(`
@@ -204,7 +198,6 @@ router.get("/api/status-page/:slug/unsubscribe/:token", async (request, response
                 </body>
             </html>
         `);
-
     } catch (error) {
         log.error("subscriber", error);
         response.status(500).send(`
@@ -241,7 +234,6 @@ router.get("/api/status-page/:slug/subscriber-count", async (request, response) 
             ok: true,
             count,
         });
-
     } catch (error) {
         log.error("subscriber", error);
         response.status(500).json({
@@ -288,7 +280,7 @@ router.get("/api/status-page/:slug/subscriber-count", async (request, response) 
 
 //         const { slug } = request.params;
 //         const statusPageId = await StatusPage.slugToID(slug);
-        
+
 //         if (!statusPageId) {
 //             return response.status(404).json({
 //                 ok: false,
@@ -296,8 +288,8 @@ router.get("/api/status-page/:slug/subscriber-count", async (request, response) 
 //             });
 //         }
 
-//         const subscriptions = await R.find("subscription", 
-//             " status_page_id = ? ORDER BY created_at DESC ", 
+//         const subscriptions = await R.find("subscription",
+//             " status_page_id = ? ORDER BY created_at DESC ",
 //             [statusPageId]
 //         );
 
