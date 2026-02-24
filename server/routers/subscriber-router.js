@@ -4,7 +4,6 @@ const { log } = require("../../src/util");
 const Subscriber = require("../model/subscriber");
 const Subscription = require("../model/subscription");
 const StatusPage = require("../model/status_page");
-const { checkLogin } = require("../util-server");
 
 const router = express.Router();
 
@@ -252,77 +251,78 @@ router.get("/api/status-page/:slug/subscriber-count", async (request, response) 
     }
 });
 
-/**
- * Get all subscribers (admin only)
- * GET /api/subscribers
- */
-router.get("/api/subscribers", async (request, response) => {
-    try {
-        // This would need authentication middleware
-        // For now, we'll implement basic check
-        checkLogin(request);
+// Admin endpoints not enabled yet, as they require authentication middleware
+// /**
+//  * Get all subscribers (admin only)
+//  * GET /api/subscribers
+//  */
+// router.get("/api/subscribers", async (request, response) => {
+//     try {
+//         // This would need authentication middleware
+//         // For now, we'll implement basic check
+//         checkLogin(request);
 
-        const subscribers = await R.findAll("subscriber", " ORDER BY created_at DESC ");
+//         const subscribers = await R.findAll("subscriber", " ORDER BY created_at DESC ");
 
-        response.json({
-            ok: true,
-            subscribers: subscribers.map(s => s.toJSON()),
-        });
+//         response.json({
+//             ok: true,
+//             subscribers: subscribers.map(s => s.toJSON()),
+//         });
 
-    } catch (error) {
-        log.error("subscriber", error);
-        response.status(500).json({
-            ok: false,
-            msg: error.message,
-        });
-    }
-});
+//     } catch (error) {
+//         log.error("subscriber", error);
+//         response.status(500).json({
+//             ok: false,
+//             msg: error.message,
+//         });
+//     }
+// });
 
-/**
- * Get subscriptions for a status page (admin only)
- * GET /api/status-page/:slug/subscriptions
- */
-router.get("/api/status-page/:slug/subscriptions", async (request, response) => {
-    try {
-        checkLogin(request);
+// /**
+//  * Get subscriptions for a status page (admin only)
+//  * GET /api/status-page/:slug/subscriptions
+//  */
+// router.get("/api/status-page/:slug/subscriptions", async (request, response) => {
+//     try {
+//         checkLogin(request);
 
-        const { slug } = request.params;
-        const statusPageId = await StatusPage.slugToID(slug);
+//         const { slug } = request.params;
+//         const statusPageId = await StatusPage.slugToID(slug);
         
-        if (!statusPageId) {
-            return response.status(404).json({
-                ok: false,
-                msg: "Status page not found",
-            });
-        }
+//         if (!statusPageId) {
+//             return response.status(404).json({
+//                 ok: false,
+//                 msg: "Status page not found",
+//             });
+//         }
 
-        const subscriptions = await R.find("subscription", 
-            " status_page_id = ? ORDER BY created_at DESC ", 
-            [statusPageId]
-        );
+//         const subscriptions = await R.find("subscription", 
+//             " status_page_id = ? ORDER BY created_at DESC ", 
+//             [statusPageId]
+//         );
 
-        // Load subscriber details
-        const result = [];
-        for (const sub of subscriptions) {
-            const subscriber = await R.load("subscriber", sub.subscriber_id);
-            result.push({
-                ...sub.toJSON(),
-                subscriber: subscriber ? subscriber.toJSON() : null,
-            });
-        }
+//         // Load subscriber details
+//         const result = [];
+//         for (const sub of subscriptions) {
+//             const subscriber = await R.load("subscriber", sub.subscriber_id);
+//             result.push({
+//                 ...sub.toJSON(),
+//                 subscriber: subscriber ? subscriber.toJSON() : null,
+//             });
+//         }
 
-        response.json({
-            ok: true,
-            subscriptions: result,
-        });
+//         response.json({
+//             ok: true,
+//             subscriptions: result,
+//         });
 
-    } catch (error) {
-        log.error("subscriber", error);
-        response.status(500).json({
-            ok: false,
-            msg: error.message,
-        });
-    }
-});
+//     } catch (error) {
+//         log.error("subscriber", error);
+//         response.status(500).json({
+//             ok: false,
+//             msg: error.message,
+//         });
+//     }
+// });
 
 module.exports = router;
